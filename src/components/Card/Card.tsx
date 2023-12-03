@@ -4,9 +4,9 @@ import { CardContentForm } from './card-elements/CardContentForm'
 
 import { useOutsideClick } from '../../hooks/useOutsideClick'
 
-import styles from './Card.module.css'
 import { CardModelData } from '../../data'
 import { formatDate } from '../../utils/dates'
+import styles from './Card.module.css'
 
 interface CardProps extends CardModelData {
   onUpdateCard?(updatedCard: CardModelData): void
@@ -35,6 +35,7 @@ export const Card = (props: CardProps) => {
   return (
     <div
       data-cy={`card-${props.id}`}
+      data-testid={`card-${props.id}`}
       className={styles.card}
       onClick={handleSetEditingOn}
     >
