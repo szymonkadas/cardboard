@@ -1,5 +1,5 @@
-import styles from './Card.module.css'
 import { cx } from '../../utils/cx'
+import styles from './Card.module.css'
 
 interface CardProps {
   disabled?: boolean
@@ -16,6 +16,7 @@ export const CardAddNew = (props: CardProps) => {
   return (
     <button
       data-cy={`card-add-new`}
+      data-testid={`card-add-new`}
       disabled={props.disabled}
       className={cx(styles.card, styles.addBtn)}
       onClick={handleAddNewCard}
