@@ -7,6 +7,8 @@ import {
 } from '@testing-library/react'
 import { Mock, vi } from 'vitest'
 import { CardDto, CardModel } from '../../../../data'
+import { createManyCards } from '../../../../data/card/factory'
+import { generateId } from '../../../../utils/generators'
 import { Card } from '../../../Card/Card'
 import { CardAddNew } from '../../../Card/CardAddNew'
 import { Board } from '../../Board'
@@ -17,12 +19,15 @@ interface CardsData {
 
 describe('BoardContainer integration tests', () => {
   // DB
-  const cardsData: CardsData = { cards: [] }
+  const cardsData: CardsData = {
+    cards: createManyCards(2, { content: 'test-content' }),
+  }
+  const cardsDataCopy = { ...cardsData }
   // cardObjectData
   const newCardProps = {
-    id: 10,
+    id: generateId(),
     content: 'yadda yadda',
-    createdAt: 'now',
+    createdAt: new Date().toISOString(),
   }
   let boardRerender: (
     ui: React.ReactElement<any, string | React.JSXElementConstructor<any>>
@@ -33,7 +38,7 @@ describe('BoardContainer integration tests', () => {
     cleanup()
   })
 
-  test('mock ver - Check if clicking on <AddNewCard /> adds new card to database, and displays it correctly in <Board />', () => {
+  test('mock ver - Check if clicking on <AddNewCard /> adds new card to database, and displays it correctly in <Board />', async () => {
     // post request mock: hence i can't work on remote database then work on variable db, and make changes locally.
     const mockOnAddCard = vi.fn(async () => {
       const newCard = new CardModel(newCardProps)
@@ -49,16 +54,19 @@ describe('BoardContainer integration tests', () => {
     const boardPointer = screen.getByTestId('board')
     // add new card
     const cardAddNewPointer = screen.getByTestId('card-add-new')
-    fireEvent.click(cardAddNewPointer)
+    await waitFor(() => {
+      fireEvent.click(cardAddNewPointer)
+    })
     // rerender component because of changes (can't interact with state so...)
     boardRerender(BoardContainerMock(vi.fn(), vi.fn(), vi.fn()))
     // check if added to db:
     expect(cardsData).toEqual({
-      cards: [newCardProps],
+      cards: [...cardsDataCopy.cards, newCardProps],
     })
     // check for correct display:
     expect(boardPointer).toHaveTextContent(newCardProps.content)
   })
+
   test('msw ver - Check if clicking on <AddNewCard /> adds new card to database, and displayis it correctly in <Board />', async () => {
     // waiting for state change when rendering BoardContainer (first useEffect);
     await waitFor(() => {
