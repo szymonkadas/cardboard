@@ -76,7 +76,6 @@ describe('BoardContainer integration tests', () => {
   })
 
   test('msw ver - Check if updating selected card content works correctly', async () => {
-    const spyUpdate = vi.spyOn(CardModel.prototype, 'update')
     await act(async () => {
       render(<BoardContainer />)
     })
