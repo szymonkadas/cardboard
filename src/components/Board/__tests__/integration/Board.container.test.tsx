@@ -9,8 +9,6 @@ import userEvent from '@testing-library/user-event'
 import { act } from 'react-dom/test-utils'
 import { Mock, vi } from 'vitest'
 import { CardDto, CardModel } from '../../../../data'
-import { createManyCards } from '../../../../data/card/factory'
-import { generateId } from '../../../../utils/generators'
 import { Card } from '../../../Card/Card'
 import { CardAddNew } from '../../../Card/CardAddNew'
 import { Board } from '../../Board'
@@ -22,15 +20,12 @@ interface CardsData {
 
 describe('BoardContainer integration tests', () => {
   // DB
-  const cardsData: CardsData = {
-    cards: createManyCards(2, { content: 'test-content' }),
-  }
-  const cardsDataCopy = { ...cardsData }
+  const cardsData: CardsData = { cards: [] }
   // cardObjectData
   const newCardProps = {
-    id: generateId(),
+    id: 10,
     content: 'yadda yadda',
-    createdAt: new Date().toISOString(),
+    createdAt: 'now',
   }
 
   afterEach(() => {
@@ -76,7 +71,7 @@ describe('BoardContainer integration tests', () => {
       expect(boardPointer).toHaveTextContent(newCardProps.content)
     })
 
-    test('mock ver - Check if updating selected card content works correctly', async () => {
+    test('Check if updating selected card content works correctly', async () => {
       const { rerender } = render(
         BoardContainerMock(mockOnUpdateCard, mockOnDeleteCard, mockOnAddCard)
       )
@@ -121,7 +116,7 @@ describe('BoardContainer integration tests', () => {
         render(<BoardContainer />)
       })
     })
-    test('msw ver - Check if clicking on <AddNewCard /> adds new card to database, and displayis it correctly in <Board />', async () => {
+    test('Check if clicking on <AddNewCard /> adds new card to database, and displayis it correctly in <Board />', async () => {
       const boardPointer = screen.getByTestId('board')
       // add new card
       const cardAddNewPointer = screen.getByTestId('card-add-new')
@@ -131,7 +126,7 @@ describe('BoardContainer integration tests', () => {
       expect(boardPointer).toHaveTextContent('Click to start noting')
     })
 
-    test('msw ver - Check if updating selected card content works correctly', async () => {
+    test('Check if updating selected card content works correctly', async () => {
       const cardsData = await fetchCards()
       const cardPointer = screen.getByTestId(`card-${cardsData[0].id}`)
       const newContentValue = 'changed content'
