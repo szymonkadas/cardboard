@@ -9,8 +9,6 @@ import userEvent from '@testing-library/user-event'
 import { act } from 'react-dom/test-utils'
 import { Mock, vi } from 'vitest'
 import { CardDto, CardModel } from '../../../../data'
-import { createManyCards } from '../../../../data/card/factory'
-import { generateId } from '../../../../utils/generators'
 import { Card } from '../../../Card/Card'
 import { CardAddNew } from '../../../Card/CardAddNew'
 import { Board } from '../../Board'
@@ -28,9 +26,9 @@ describe('BoardContainer integration tests', () => {
   const cardsDataCopy = { ...cardsData }
   // cardObjectData
   const newCardProps = {
-    id: generateId(),
+    id: 10,
     content: 'yadda yadda',
-    createdAt: new Date().toISOString(),
+    createdAt: 'now',
   }
 
   afterEach(() => {
