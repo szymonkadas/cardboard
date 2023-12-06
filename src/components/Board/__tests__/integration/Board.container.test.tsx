@@ -5,6 +5,8 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { act } from 'react-dom/test-utils'
 import { Mock, vi } from 'vitest'
 import { CardDto, CardModel } from '../../../../data'
 import { createManyCards } from '../../../../data/card/factory'
@@ -13,6 +15,7 @@ import { Card } from '../../../Card/Card'
 import { CardAddNew } from '../../../Card/CardAddNew'
 import { Board } from '../../Board'
 import BoardContainer from '../../Board.container'
+
 interface CardsData {
   cards: CardDto[]
 }
@@ -33,7 +36,6 @@ describe('BoardContainer integration tests', () => {
     ui: React.ReactElement<any, string | React.JSXElementConstructor<any>>
   ) => void
 
-  beforeEach(() => {})
   afterEach(() => {
     cleanup()
   })
@@ -69,8 +71,8 @@ describe('BoardContainer integration tests', () => {
 
   test('msw ver - Check if clicking on <AddNewCard /> adds new card to database, and displayis it correctly in <Board />', async () => {
     // waiting for state change when rendering BoardContainer (first useEffect);
-    await waitFor(() => {
-      render(<BoardContainer></BoardContainer>)
+    await act(() => {
+      render(<BoardContainer />)
     })
     const boardPointer = screen.getByTestId('board')
     // add new card
@@ -78,8 +80,56 @@ describe('BoardContainer integration tests', () => {
     await waitFor(() => {
       fireEvent.click(cardAddNewPointer)
     })
-    // could have put it in waitFor but for unknown reasons options don't help when it's wrong, and the test just keeps on going for eternity, hence first waitFor got introduced.
     expect(boardPointer).toHaveTextContent('Click to start noting')
+  })
+
+  test('msw ver - Check if updating selected card content works correctly', async () => {
+    const spyUpdate = vi.spyOn(CardModel.prototype, 'update')
+    await act(async () => {
+      render(<BoardContainer />)
+    })
+    const cardsData = await fetchCards()
+    const cardPointer = screen.getByTestId(`card-${cardsData[0].id}`)
+    const newContentValue = 'changed content'
+    await waitFor(async () => {
+      await userEvent.click(cardPointer)
+      await userEvent.type(cardPointer, newContentValue)
+      await userEvent.tab()
+    })
+    // check ui
+    expect(cardPointer).toHaveTextContent(newContentValue)
+    // check db
+    // when clicking on item, and there's already some text content, everything typed in without any special interactions get inserted before previous content. Hence used toContain.
+    expect((await fetchCards())[0].content).toContain(newContentValue)
+  })
+
+  test('mock ver - Check if updating selected card content works correctly', async () => {
+    const mockOnAddCard = vi.fn()
+    const mockOnUpdateCard = vi.fn((cardData: CardDto) => {
+      cardsData.cards = cardsData.cards.map((card) =>
+        card.id === cardData.id ? cardData : card
+      )
+    })
+    const mockOnDeleteCard = vi.fn()
+    // await act(() => {
+    const { rerender } = render(
+      BoardContainerMock(mockOnUpdateCard, mockOnDeleteCard, mockOnAddCard)
+    )
+    // })
+    const cardPointer = screen.getByTestId(`card-${cardsData.cards[0].id}`)
+    const newContentValue = 'changed content'
+    await waitFor(async () => {
+      await userEvent.click(cardPointer)
+      await userEvent.type(cardPointer, newContentValue)
+      await userEvent.tab()
+    })
+    // check db
+    expect(cardsData.cards[0].content).toContain(newContentValue)
+    // check ui, rerender because can't interact with state
+    rerender(
+      BoardContainerMock(mockOnUpdateCard, mockOnDeleteCard, mockOnAddCard)
+    )
+    expect(cardPointer).toHaveTextContent(newContentValue)
   })
 
   const BoardContainerMock = (
@@ -104,3 +154,7 @@ describe('BoardContainer integration tests', () => {
     )
   }
 })
+
+async function fetchCards(): Promise<CardDto[]> {
+  return await fetch(`http://localhost:4100/cards`).then((res) => res.json())
+}
