@@ -9,6 +9,8 @@ import userEvent from '@testing-library/user-event'
 import { act } from 'react-dom/test-utils'
 import { Mock, vi } from 'vitest'
 import { CardDto, CardModel } from '../../../../data'
+import { createManyCards } from '../../../../data/card/factory'
+import { formatDate } from '../../../../utils/dates'
 import { Card } from '../../../Card/Card'
 import { CardAddNew } from '../../../Card/CardAddNew'
 import { Board } from '../../Board'
@@ -151,6 +153,22 @@ describe('BoardContainer integration tests', () => {
       expect(cardsData.cards.length).toBe(cardsDataCopy.cards.length)
     })
 
+    test('Check if rendering <BoardContainer /> displays cards correctly', async () => {
+      render(
+        BoardContainerMock(mockOnUpdateCard, mockOnDeleteCard, mockOnAddCard)
+      )
+      cardsData.cards.forEach((card) => {
+        const cardPointer = screen.getByTestId(`card-${card.id}`)
+        expect(cardPointer).toBeInTheDocument()
+        if (card.content !== '') {
+          expect(cardPointer).toHaveTextContent(card.content)
+        } else {
+          expect(cardPointer).toHaveTextContent('Click to start noting')
+        }
+        expect(cardPointer).toHaveTextContent(formatDate(card.createdAt))
+      })
+    })
+
     const BoardContainerMock = (
       mockOnUpdateCard: Mock,
       mockOnDeleteCard: Mock,
@@ -239,6 +257,20 @@ describe('BoardContainer integration tests', () => {
       expect(cardPointer).toBeInTheDocument()
       // nothing got deleted, so it should remain same. DB.
       expect(cardsData).toEqual(await fetchCards())
+    })
+
+    test('Check if rendering <BoardContainer /> displays cards correctly', async () => {
+      const cardsData = await fetchCards()
+      cardsData.forEach((card) => {
+        const cardPointer = screen.getByTestId(`card-${card.id}`)
+        expect(cardPointer).toBeInTheDocument()
+        if (card.content !== '') {
+          expect(cardPointer).toHaveTextContent(card.content)
+        } else {
+          expect(cardPointer).toHaveTextContent('Click to start noting')
+        }
+        expect(cardPointer).toHaveTextContent(formatDate(card.createdAt))
+      })
     })
   })
 })
